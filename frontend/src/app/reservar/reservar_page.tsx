@@ -373,6 +373,7 @@ const schema = z.object({
   email: z.string().email("Email inválido"),
   telefono: z.string().optional(),
 });
+type FormData = z.infer<typeof schema>;
 
 const inputCls =
   "w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all";
@@ -407,7 +408,7 @@ function Step3({
 }) {
   const [dni, setDni] = useState("");
   const [buscando, setBuscando] = useState(false);
-  const [pacienteExistente, setPacienteExistente] = useState<Record<string, string> | null>(null);
+  const [pacienteExistente, setPacienteExistente] = useState<Record<string, unknown> | null>(null);
   const [esNuevo, setEsNuevo] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -417,7 +418,7 @@ function Step3({
   const [obrasSociales, setObrasSociales] = useState<ObraSocial[]>([]);
   const [obraSocialId, setObraSocialId] = useState<string>("");
 
-  const form = useForm({ resolver: zodResolver(schema), defaultValues: { dni } });
+  const form = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: { dni, nombre: "", apellido: "", fecha_nacimiento: "", email: "", telefono: "" } });
 
   useEffect(() => {
     supabase
@@ -524,6 +525,18 @@ function Step3({
         ))}
       </div>
 
+      {tipoCobertura === "particular" && (
+        <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+          💰 <strong>Consulta particular:</strong> el pago se abona directamente en el consultorio el día del turno.
+        </div>
+      )}
+
+      {tipoCobertura === "otro" && (
+        <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-600">
+          ℹ️ Por favor, presentá tu documentación de cobertura el día del turno.
+        </div>
+      )}
+
       {tipoCobertura === "obra_social" && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -594,9 +607,9 @@ function Step3({
         <div className="border-2 border-green-400 rounded-xl p-4 bg-green-50 space-y-3">
           <p className="text-green-700 font-semibold text-sm">✓ Paciente encontrado</p>
           <p className="text-gray-800 font-medium">
-            {pacienteExistente.nombre} {pacienteExistente.apellido}
+            {String(pacienteExistente.nombre ?? "")} {String(pacienteExistente.apellido ?? "")}
           </p>
-          <p className="text-sm text-gray-500">{pacienteExistente.email}</p>
+          <p className="text-sm text-gray-500">{String(pacienteExistente.email ?? "")}</p>
 
           {coberturaSection}
 

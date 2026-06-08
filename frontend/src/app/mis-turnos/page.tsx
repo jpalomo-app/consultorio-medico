@@ -77,7 +77,7 @@ function TurnoCard({
   const futuro = esFuturo(turno.fecha_inicio);
   const accionable = futuro && (turno.estado === "pendiente" || turno.estado === "confirmado");
   const estadoConf = ESTADO_CONFIG[turno.estado] ?? ESTADO_CONFIG.pendiente;
-  const color = turno.profesionales.especialidades.color_agenda;
+  const color = turno.profesionales?.especialidades?.color_agenda ?? '#6B7280';
 
   async function handleCancelar() {
     if (!confirmandoCancelar) { setConfirmandoCancelar(true); return; }
@@ -103,10 +103,10 @@ function TurnoCard({
         </div>
 
         <p className="font-black text-gray-900 text-base">
-          Dr/a. {turno.profesionales.nombre} {turno.profesionales.apellido}
+          Dr/a. {turno.profesionales?.nombre ?? '—'} {turno.profesionales?.apellido ?? ''}
         </p>
         <p className="text-sm font-semibold mb-3" style={{ color }}>
-          {turno.profesionales.especialidades.nombre}
+          {turno.profesionales?.especialidades?.nombre ?? 'Especialidad no disponible'}
         </p>
 
         <div className="space-y-1">
@@ -414,9 +414,9 @@ export default function MisTurnosPage() {
         <ModalReprogramar
           turno={{
             id: turnoAReprogramar.id,
-            profesional_id: turnoAReprogramar.profesionales.id,
-            profesional_nombre: `${turnoAReprogramar.profesionales.nombre} ${turnoAReprogramar.profesionales.apellido}`,
-            especialidad_nombre: turnoAReprogramar.profesionales.especialidades.nombre,
+            profesional_id: turnoAReprogramar.profesionales?.id ?? '',
+            profesional_nombre: `${turnoAReprogramar.profesionales?.nombre ?? ''} ${turnoAReprogramar.profesionales?.apellido ?? ''}`.trim(),
+            especialidad_nombre: turnoAReprogramar.profesionales?.especialidades?.nombre ?? 'Sin especialidad',
             fecha_inicio: turnoAReprogramar.fecha_inicio,
           }}
           onClose={() => setTurnoAReprogramar(null)}
