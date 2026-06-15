@@ -85,7 +85,7 @@ export function GestionEspecialidades({ dark = true }: { dark?: boolean }) {
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [eliminando, setEliminando] = useState<string | null>(null);
 
-  const inp = `w-full border ${dark ? "bg-white/5 border-white/10 text-white placeholder-gray-600" : "bg-gray-50 border-gray-200 text-gray-900"} rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500`;
+  const inp = `w-full border ${dark ? "bg-white/5 border-white/10 text-white placeholder-gray-600 [&>option]:text-gray-900 [&>option]:bg-white" : "bg-gray-50 border-gray-200 text-gray-900"} rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500`;
   const C = dark ? CardDark : CardLight;
   const txt = dark ? "text-gray-400" : "text-gray-600";
 
@@ -195,7 +195,7 @@ export function GestionProfesionales({ dark = true }: { dark?: boolean }) {
   const [msg, setMsg] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
   const [editandoId, setEditandoId] = useState<string | null>(null);
 
-  const inp = `w-full border ${dark ? "bg-white/5 border-white/10 text-white placeholder-gray-600" : "bg-gray-50 border-gray-200 text-gray-900"} rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500`;
+  const inp = `w-full border ${dark ? "bg-white/5 border-white/10 text-white placeholder-gray-600 [&>option]:text-gray-900 [&>option]:bg-white" : "bg-gray-50 border-gray-200 text-gray-900"} rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500`;
   const C = dark ? CardDark : CardLight;
   const txt = dark ? "text-gray-400" : "text-gray-600";
 
@@ -299,7 +299,7 @@ export function GestionAgendas({ dark = true }: { dark?: boolean }) {
   const [guardando, setGuardando] = useState(false);
   const [msg, setMsg] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
 
-  const inp = `border ${dark ? "bg-white/5 border-white/10 text-white" : "bg-gray-50 border-gray-200 text-gray-900"} rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500`;
+  const inp = `border ${dark ? "bg-white/5 border-white/10 text-white [&>option]:text-gray-900 [&>option]:bg-white" : "bg-gray-50 border-gray-200 text-gray-900"} rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500`;
   const C = dark ? CardDark : CardLight;
   const txt = dark ? "text-gray-400" : "text-gray-600";
 
@@ -384,7 +384,7 @@ export function GestionObrasSociales({ dark = false }: { dark?: boolean }) {
   const [editId, setEditId] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
 
-  const inp = `w-full border ${dark ? "bg-white/5 border-white/10 text-white placeholder-gray-600" : "bg-gray-50 border-gray-200 text-gray-900"} rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500`;
+  const inp = `w-full border ${dark ? "bg-white/5 border-white/10 text-white placeholder-gray-600 [&>option]:text-gray-900 [&>option]:bg-white" : "bg-gray-50 border-gray-200 text-gray-900"} rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500`;
   const C = dark ? CardDark : CardLight;
   const txt = dark ? "text-gray-400" : "text-gray-600";
 

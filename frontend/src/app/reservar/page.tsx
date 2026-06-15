@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -770,64 +771,116 @@ export default function ReservarPage() {
     setBooking((prev) => ({ ...prev, ...partial }));
   }
 
-  if (turnoConfirmado) {
-    return (
-      <Confirmacion
-        turno={turnoConfirmado}
-        onNuevoTurno={() => { setBooking(INITIAL); setTurnoConfirmado(null); setStep(0); }}
-      />
-    );
-  }
-
   return (
-    <div>
-      {/* Stepper */}
-      <div className="flex items-center justify-between mb-8">
-        {STEPS.map((label, i) => (
-          <div key={i} className="flex items-center flex-1">
-            <div className="flex items-center gap-2">
-              <div
-                className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all",
-                  i < step
-                    ? "bg-blue-500 text-white"
-                    : i === step
-                    ? "bg-blue-500 text-white ring-4 ring-blue-100"
-                    : "bg-gray-100 text-gray-400"
-                )}
-              >
-                {i < step ? "✓" : i + 1}
-              </div>
-              <span
-                className={cn(
-                  "text-xs font-medium hidden sm:block",
-                  i === step ? "text-blue-500" : i < step ? "text-blue-500" : "text-gray-400"
-                )}
-              >
-                {label}
-              </span>
-            </div>
-            {i < STEPS.length - 1 && (
-              <div
-                className={cn(
-                  "flex-1 h-0.5 mx-2 transition-all",
-                  i < step ? "bg-blue-400" : "bg-gray-200"
-                )}
-              />
-            )}
-          </div>
-        ))}
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-brand-900 to-gray-900">
+      {/* Fondo decorativo */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-brand-500/15 rounded-full blur-[100px]" />
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage:
+              "linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
       </div>
 
-      {step === 0 && (
-        <Step1 state={booking} onChange={update} onNext={() => setStep(1)} />
-      )}
-      {step === 1 && (
-        <Step2 state={booking} onChange={update} onNext={() => setStep(2)} onBack={() => setStep(0)} />
-      )}
-      {step === 2 && (
-        <Step3 state={booking} onBack={() => setStep(1)} onSuccess={setTurnoConfirmado} />
-      )}
+      {/* Header */}
+      <header className="relative z-10 border-b border-white/10">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+          <Link href="/">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-brand-500 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/30 flex-shrink-0">
+                <span className="text-sm font-black text-white tracking-tight">SM</span>
+              </div>
+              <div>
+                <p className="font-black text-white leading-none text-sm">Medicina Laboral</p>
+                <p className="text-[10px] text-brand-500 font-semibold tracking-wider uppercase">Turnos Online</p>
+              </div>
+            </div>
+          </Link>
+          <Link href="/" className="text-sm text-gray-400 hover:text-white transition-colors">
+            ← Inicio
+          </Link>
+        </div>
+      </header>
+
+      {/* Contenido */}
+      <main className="relative z-10 max-w-2xl mx-auto px-4 py-10">
+        {!turnoConfirmado && (
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-black text-white">Reservá tu turno</h1>
+            <p className="text-gray-400 mt-2 text-sm">3 pasos · menos de 2 minutos</p>
+          </div>
+        )}
+
+        <div className="bg-white rounded-3xl shadow-2xl shadow-black/40 border border-white/10 p-8">
+          {turnoConfirmado ? (
+            <Confirmacion
+              turno={turnoConfirmado}
+              onNuevoTurno={() => { setBooking(INITIAL); setTurnoConfirmado(null); setStep(0); }}
+            />
+          ) : (
+            <div>
+              {/* Stepper */}
+              <div className="flex items-center justify-between mb-8">
+                {STEPS.map((label, i) => (
+                  <div key={i} className="flex items-center flex-1">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all",
+                          i < step
+                            ? "bg-brand-500 text-white"
+                            : i === step
+                            ? "bg-brand-500 text-white ring-4 ring-brand-100"
+                            : "bg-gray-100 text-gray-400"
+                        )}
+                      >
+                        {i < step ? "✓" : i + 1}
+                      </div>
+                      <span
+                        className={cn(
+                          "text-xs font-medium hidden sm:block",
+                          i === step ? "text-brand-500" : i < step ? "text-brand-500" : "text-gray-400"
+                        )}
+                      >
+                        {label}
+                      </span>
+                    </div>
+                    {i < STEPS.length - 1 && (
+                      <div
+                        className={cn(
+                          "flex-1 h-0.5 mx-2 transition-all",
+                          i < step ? "bg-brand-400" : "bg-gray-200"
+                        )}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {step === 0 && (
+                <Step1 state={booking} onChange={update} onNext={() => setStep(1)} />
+              )}
+              {step === 1 && (
+                <Step2 state={booking} onChange={update} onNext={() => setStep(2)} onBack={() => setStep(0)} />
+              )}
+              {step === 2 && (
+                <Step3 state={booking} onBack={() => setStep(1)} onSuccess={setTurnoConfirmado} />
+              )}
+            </div>
+          )}
+        </div>
+
+        <p className="text-center text-xs text-gray-500 mt-6">
+          {"¿Necesitás ayuda? Llamanos al"}{" "}
+          <a href="tel:+542215480558" className="text-brand-400 font-semibold hover:underline">
+            (011) 0000-0000
+          </a>
+        </p>
+      </main>
     </div>
   );
 }
