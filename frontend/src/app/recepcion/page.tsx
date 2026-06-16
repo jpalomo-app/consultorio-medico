@@ -370,7 +370,7 @@ export default function RecepcionPage() {
           style={{ backgroundImage:"linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)", backgroundSize:"40px 40px" }} />
       </div>
 
-      <header className="relative z-10 border-b border-white/10 bg-black/20 backdrop-blur-md sticky top-0">
+      <header className="relative z-30 border-b border-white/10 bg-black/20 backdrop-blur-md sticky top-0">
         <div className="max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">
             <Link href="/" title="Volver al inicio" className="w-9 h-9 bg-brand-500 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/30 flex-shrink-0 hover:bg-brand-400 transition-colors">
