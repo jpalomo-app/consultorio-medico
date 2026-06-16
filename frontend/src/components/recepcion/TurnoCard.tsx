@@ -47,7 +47,21 @@ export default function TurnoCard({ turno, onActualizado }: Props) {
     onActualizado();
   }
 
+  async function cobrarCopago() {
+    setProcesando(true);
+    setErrorAccion(null);
+    const { error } = await supabase
+      .from("turnos")
+      .update({ copago_abonado: true })
+      .eq("id", turno.id);
+    setProcesando(false);
+    if (error) { setErrorAccion("No se pudo registrar el pago. Intenta de nuevo."); return; }
+    onActualizado();
+  }
+
   const colorEsp = turno.especialidades?.color_agenda ?? "#3B82F6";
+  const tieneCopagoPendiente =
+    (turno.obras_sociales?.copago_monto ?? 0) > 0 && !turno.copago_abonado;
 
   return (
     <>
@@ -59,6 +73,7 @@ export default function TurnoCard({ turno, onActualizado }: Props) {
       >
         <div className="h-1 w-full" style={{ backgroundColor: colorEsp }} />
         <div className="p-4">
+          {/* Fila principal */}
           <div className="flex items-start justify-between gap-3">
             <div className="text-center flex-shrink-0 w-14">
               <p className="text-lg font-bold text-gray-800 leading-none">
@@ -89,6 +104,54 @@ export default function TurnoCard({ turno, onActualizado }: Props) {
             </div>
           </div>
 
+          {/* ─── Acciones rápidas (siempre visibles) ─── */}
+          {(turno.estado === "pendiente" || turno.estado === "confirmado") && (
+            <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+              {turno.estado === "pendiente" && (
+                <BtnRapido
+                  label="Llegó"
+                  icon="✓"
+                  color="green"
+                  disabled={procesando}
+                  onClick={() => cambiarEstado("confirmado")}
+                />
+              )}
+              {turno.estado === "confirmado" && (
+                <>
+                  <BtnRapido
+                    label="Atendido"
+                    icon="✓"
+                    color="green"
+                    disabled={procesando}
+                    onClick={() => cambiarEstado("completado")}
+                  />
+                  <BtnRapido
+                    label="No asistió"
+                    icon="✕"
+                    color="gray"
+                    disabled={procesando}
+                    onClick={() => cambiarEstado("no_asistio")}
+                  />
+                  {tieneCopagoPendiente && (
+                    <BtnRapido
+                      label={"$ " + turno.obras_sociales!.copago_monto.toLocaleString("es-AR")}
+                      icon="$"
+                      color="blue"
+                      disabled={procesando}
+                      onClick={cobrarCopago}
+                    />
+                  )}
+                </>
+              )}
+              {errorAccion && (
+                <p className="w-full text-xs text-red-600 bg-red-50 rounded-lg px-3 py-1.5">
+                  {errorAccion}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* ─── Panel expandido: detalles + acciones secundarias ─── */}
           {expandido && (
             <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
               <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
@@ -140,24 +203,10 @@ export default function TurnoCard({ turno, onActualizado }: Props) {
                 <p className="capitalize">Origen: {turno.origen}</p>
               </div>
 
-              {errorAccion && (
-                <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">
-                  {errorAccion}
-                </p>
-              )}
-
+              {/* Acciones secundarias */}
               <div className="flex flex-wrap gap-2">
-                {turno.estado === "pendiente" && (
+                {(turno.estado === "pendiente" || turno.estado === "confirmado") && (
                   <>
-                    <Btn label="Confirmar llegada" color="green" disabled={procesando} onClick={() => cambiarEstado("confirmado")} />
-                    <Btn label="Reprogramar" color="blue" disabled={procesando} onClick={() => setModalReprogramar(true)} />
-                    <Btn label="Cancelar" color="red" disabled={procesando} onClick={() => cambiarEstado("cancelado")} />
-                  </>
-                )}
-                {turno.estado === "confirmado" && (
-                  <>
-                    <Btn label="Completar consulta" color="blue" disabled={procesando} onClick={() => cambiarEstado("completado")} />
-                    <Btn label="No asistio" color="gray" disabled={procesando} onClick={() => cambiarEstado("no_asistio")} />
                     <Btn label="Reprogramar" color="blue" disabled={procesando} onClick={() => setModalReprogramar(true)} />
                     <Btn label="Cancelar" color="red" disabled={procesando} onClick={() => cambiarEstado("cancelado")} />
                   </>
@@ -179,6 +228,35 @@ export default function TurnoCard({ turno, onActualizado }: Props) {
         />
       )}
     </>
+  );
+}
+
+interface BtnRapidoProps {
+  label: string;
+  icon: string;
+  color: "green" | "blue" | "gray";
+  onClick: () => void;
+  disabled: boolean;
+}
+
+function BtnRapido({ label, icon, color, onClick, disabled }: BtnRapidoProps) {
+  const styles: Record<string, string> = {
+    green: "bg-green-500 hover:bg-green-600 text-white shadow-sm shadow-green-200",
+    blue:  "bg-blue-500 hover:bg-blue-600 text-white shadow-sm shadow-blue-200",
+    gray:  "bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-200",
+  };
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-50",
+        styles[color]
+      )}
+    >
+      <span className="text-sm leading-none">{icon}</span>
+      {label}
+    </button>
   );
 }
 
