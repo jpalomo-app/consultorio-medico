@@ -27,6 +27,14 @@ export interface AgendaDia {
   activo: boolean;
 }
 
+interface Bloqueo {
+  id: string;
+  profesional_id: string;
+  fecha_inicio: string;
+  fecha_fin: string;
+  motivo: string | null;
+}
+
 export interface ObraSocial {
   id: string;
   nombre: string;
@@ -299,6 +307,13 @@ export function GestionAgendas({ dark = true }: { dark?: boolean }) {
   const [guardando, setGuardando] = useState(false);
   const [msg, setMsg] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
 
+  // Bloqueos
+  const [bloqueos, setBloqueos] = useState<Bloqueo[]>([]);
+  const [formBloqueo, setFormBloqueo] = useState({ fecha_inicio: "", fecha_fin: "", motivo: "" });
+  const [guardandoBloqueo, setGuardandoBloqueo] = useState(false);
+  const [msgBloqueo, setMsgBloqueo] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
+  const [eliminandoId, setEliminandoId] = useState<string | null>(null);
+
   const inp = `border ${dark ? "bg-white/5 border-white/10 text-white [&>option]:text-gray-900 [&>option]:bg-white" : "bg-gray-50 border-gray-200 text-gray-900"} rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500`;
   const C = dark ? CardDark : CardLight;
   const txt = dark ? "text-gray-400" : "text-gray-600";
@@ -309,7 +324,7 @@ export function GestionAgendas({ dark = true }: { dark?: boolean }) {
   }, []);
 
   useEffect(() => {
-    if (!profSeleccionado) { setAgendas([]); return; }
+    if (!profSeleccionado) { setAgendas([]); setBloqueos([]); return; }
     setCargando(true);
     supabase.from("agendas_disponibilidad").select("*").eq("profesional_id", profSeleccionado)
       .then(({ data }) => {
@@ -320,7 +335,18 @@ export function GestionAgendas({ dark = true }: { dark?: boolean }) {
         setAgendas(base);
         setCargando(false);
       });
+    cargarBloqueos();
   }, [profSeleccionado]);
+
+  async function cargarBloqueos() {
+    const { data } = await supabase
+      .from("bloqueos")
+      .select("*")
+      .eq("profesional_id", profSeleccionado)
+      .gte("fecha_fin", new Date().toISOString())
+      .order("fecha_inicio");
+    setBloqueos(data ?? []);
+  }
 
   async function guardarAgendas() {
     if (!profSeleccionado) return;
@@ -334,8 +360,45 @@ export function GestionAgendas({ dark = true }: { dark?: boolean }) {
     finally { setGuardando(false); }
   }
 
+  async function agregarBloqueo(e: React.FormEvent) {
+    e.preventDefault();
+    if (!formBloqueo.fecha_inicio || !formBloqueo.fecha_fin) return;
+    if (formBloqueo.fecha_fin < formBloqueo.fecha_inicio) {
+      setMsgBloqueo({ tipo: "error", texto: "La fecha fin debe ser igual o posterior a la fecha inicio." });
+      return;
+    }
+    setGuardandoBloqueo(true); setMsgBloqueo(null);
+    const { error } = await supabase.from("bloqueos").insert({
+      profesional_id: profSeleccionado,
+      fecha_inicio: formBloqueo.fecha_inicio + "T00:00:00Z",
+      fecha_fin:    formBloqueo.fecha_fin    + "T23:59:59Z",
+      motivo: formBloqueo.motivo.trim() || null,
+    });
+    setGuardandoBloqueo(false);
+    if (error) {
+      setMsgBloqueo({ tipo: "error", texto: "No se pudo guardar el bloqueo." });
+    } else {
+      setFormBloqueo({ fecha_inicio: "", fecha_fin: "", motivo: "" });
+      setMsgBloqueo({ tipo: "ok", texto: "Bloqueo registrado." });
+      cargarBloqueos();
+    }
+  }
+
+  async function eliminarBloqueo(id: string) {
+    setEliminandoId(id);
+    await supabase.from("bloqueos").delete().eq("id", id);
+    setBloqueos(prev => prev.filter(b => b.id !== id));
+    setEliminandoId(null);
+  }
+
   function updateDia(idx: number, field: keyof AgendaDia, value: string | boolean) {
     setAgendas(prev => prev.map((a, i) => i === idx ? { ...a, [field]: value } : a));
+  }
+
+  function formatRangoFecha(inicio: string, fin: string) {
+    const d1 = new Date(inicio).toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" });
+    const d2 = new Date(fin).toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" });
+    return d1 === d2 ? d1 : `${d1} — ${d2}`;
   }
 
   return (
@@ -346,28 +409,106 @@ export function GestionAgendas({ dark = true }: { dark?: boolean }) {
           {profesionales.map(p => <option key={p.id} value={p.id}>Dr/a. {p.apellido}, {p.nombre} — {p.especialidades?.nombre}</option>)}
         </select>
       </C>
+
       {profSeleccionado && (
-        <C title="Horarios por día" icon={<span>🕐</span>}>
-          {cargando ? (
-            <p className={`text-xs ${txt}`}>Cargando agenda...</p>
-          ) : (
-            <div className="space-y-3">
-              {agendas.map((a, idx) => (
-                <div key={a.dia_semana} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${dark ? "bg-white/5" : "bg-gray-50"}`}>
-                  <input type="checkbox" checked={a.activo} onChange={e => updateDia(idx, "activo", e.target.checked)} className="w-4 h-4 accent-brand-500" />
-                  <span className={`w-20 text-sm font-medium ${dark ? "text-white" : "text-gray-800"}`}>{DIAS[a.dia_semana]}</span>
-                  <input type="time" value={a.hora_inicio} onChange={e => updateDia(idx, "hora_inicio", e.target.value)} disabled={!a.activo} className={`${inp} w-28 disabled:opacity-40`} />
-                  <span className={`text-xs ${txt}`}>a</span>
-                  <input type="time" value={a.hora_fin} onChange={e => updateDia(idx, "hora_fin", e.target.value)} disabled={!a.activo} className={`${inp} w-28 disabled:opacity-40`} />
+        <>
+          <C title="Horarios por día" icon={<span>🕐</span>}>
+            {cargando ? (
+              <p className={`text-xs ${txt}`}>Cargando agenda...</p>
+            ) : (
+              <div className="space-y-3">
+                {agendas.map((a, idx) => (
+                  <div key={a.dia_semana} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${dark ? "bg-white/5" : "bg-gray-50"}`}>
+                    <input type="checkbox" checked={a.activo} onChange={e => updateDia(idx, "activo", e.target.checked)} className="w-4 h-4 accent-brand-500" />
+                    <span className={`w-20 text-sm font-medium ${dark ? "text-white" : "text-gray-800"}`}>{DIAS[a.dia_semana]}</span>
+                    <input type="time" value={a.hora_inicio} onChange={e => updateDia(idx, "hora_inicio", e.target.value)} disabled={!a.activo} className={`${inp} w-28 disabled:opacity-40`} />
+                    <span className={`text-xs ${txt}`}>a</span>
+                    <input type="time" value={a.hora_fin} onChange={e => updateDia(idx, "hora_fin", e.target.value)} disabled={!a.activo} className={`${inp} w-28 disabled:opacity-40`} />
+                  </div>
+                ))}
+                <Msg msg={msg} />
+                <button onClick={guardarAgendas} disabled={guardando} className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-2.5 rounded-xl transition-all disabled:opacity-60 text-sm mt-2">
+                  {guardando ? "Guardando..." : "Guardar agenda"}
+                </button>
+              </div>
+            )}
+          </C>
+
+          <C title="Bloqueos / Ausencias" icon={<span>🚫</span>}>
+            {/* Lista de bloqueos activos */}
+            {bloqueos.length > 0 && (
+              <ul className="space-y-2 mb-4">
+                {bloqueos.map(b => (
+                  <li key={b.id} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${dark ? "bg-white/5" : "bg-gray-50"}`}>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-semibold ${dark ? "text-white" : "text-gray-800"}`}>
+                        {formatRangoFecha(b.fecha_inicio, b.fecha_fin)}
+                      </p>
+                      {b.motivo && <p className={`text-xs ${txt} truncate`}>{b.motivo}</p>}
+                    </div>
+                    <button
+                      onClick={() => eliminarBloqueo(b.id)}
+                      disabled={eliminandoId === b.id}
+                      className="text-xs text-red-500 hover:text-red-400 font-semibold disabled:opacity-40 flex-shrink-0"
+                    >
+                      {eliminandoId === b.id ? "..." : "Eliminar"}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {bloqueos.length === 0 && (
+              <p className={`text-xs ${txt} mb-4`}>No hay bloqueos activos para este profesional.</p>
+            )}
+
+            {/* Formulario nuevo bloqueo */}
+            <form onSubmit={agregarBloqueo} className="space-y-3 border-t border-white/10 pt-4">
+              <p className={`text-xs font-semibold ${dark ? "text-gray-300" : "text-gray-600"}`}>Agregar bloqueo</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className={`text-xs mb-1 block ${txt}`}>Desde</label>
+                  <input
+                    type="date"
+                    value={formBloqueo.fecha_inicio}
+                    min={new Date().toISOString().slice(0, 10)}
+                    onChange={e => setFormBloqueo(f => ({ ...f, fecha_inicio: e.target.value, fecha_fin: f.fecha_fin < e.target.value ? e.target.value : f.fecha_fin }))}
+                    required
+                    className={inp}
+                  />
                 </div>
-              ))}
-              <Msg msg={msg} />
-              <button onClick={guardarAgendas} disabled={guardando} className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-2.5 rounded-xl transition-all disabled:opacity-60 text-sm mt-2">
-                {guardando ? "Guardando..." : "Guardar agenda"}
+                <div>
+                  <label className={`text-xs mb-1 block ${txt}`}>Hasta</label>
+                  <input
+                    type="date"
+                    value={formBloqueo.fecha_fin}
+                    min={formBloqueo.fecha_inicio || new Date().toISOString().slice(0, 10)}
+                    onChange={e => setFormBloqueo(f => ({ ...f, fecha_fin: e.target.value }))}
+                    required
+                    className={inp}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className={`text-xs mb-1 block ${txt}`}>Motivo (opcional)</label>
+                <input
+                  type="text"
+                  value={formBloqueo.motivo}
+                  onChange={e => setFormBloqueo(f => ({ ...f, motivo: e.target.value }))}
+                  placeholder="Ej: Feriado nacional, Licencia, Congreso..."
+                  className={inp}
+                />
+              </div>
+              <Msg msg={msgBloqueo} />
+              <button
+                type="submit"
+                disabled={guardandoBloqueo || !formBloqueo.fecha_inicio || !formBloqueo.fecha_fin}
+                className="w-full bg-red-500/80 hover:bg-red-500 text-white font-bold py-2.5 rounded-xl transition-all disabled:opacity-50 text-sm"
+              >
+                {guardandoBloqueo ? "Guardando..." : "Bloquear fechas"}
               </button>
-            </div>
-          )}
-        </C>
+            </form>
+          </C>
+        </>
       )}
     </div>
   );
