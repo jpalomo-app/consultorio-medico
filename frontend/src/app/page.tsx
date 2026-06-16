@@ -1,4 +1,5 @@
 import Link from "next/link";
+import DisponibilidadWidget from "@/components/landing/DisponibilidadWidget";
 
 export default function Home() {
   return (
@@ -91,6 +92,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <DisponibilidadWidget />
 
       {/* Steps */}
       <section className="py-24 bg-gray-50">
